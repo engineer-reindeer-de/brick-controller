@@ -8,7 +8,7 @@ void setupLogging()
 {
   Serial.begin(115200);
   delay(1000);
-#ifdef HAS_DISPLAY
+#if HAS_DISPLAY
   initDisplay();
 #endif
 }

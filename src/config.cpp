@@ -54,12 +54,6 @@ void Config::load() {
     EEPROM.get(0, *this);
     EEPROM.end();
   #endif
-
-    if (strlen(ssid) == 0) {
-        strncpy(ssid, "WLAN-SCHWARZ-2.4G", sizeof(ssid));
-        strncpy(password, "Willkommen bei Erika und Rudolf", sizeof(password));
-        save();
-    }
 }
 
 void Config::save() {

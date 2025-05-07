@@ -49,7 +49,6 @@ void setup()
     initCamera();
   #endif
 
-
   setupServer();
   logInfo("✅ Webserver initialisiert.");
   delay(1000);

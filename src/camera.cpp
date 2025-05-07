@@ -1,3 +1,4 @@
+#ifdef HAS_CAMERA
 #include <esp_camera.h>
 #include <ESPAsyncWebServer.h>
 
@@ -73,3 +74,5 @@ void initCamera() {
       Serial.printf("❌ Kamera konnte nicht initialisiert werden! Fehlercode: 0x%x\n", cam_err);
     }
 }
+
+#endif
