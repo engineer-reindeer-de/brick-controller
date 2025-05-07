@@ -3,7 +3,9 @@
 #include <cstring>
 #include "logging.h"
 
-#if defined(BOARD_ESP32CAM)
+#if defined(BOARD_ESP01)
+#include "include/controllerConfigEsp01.h"
+#elif defined(BOARD_ESP32CAM)
 #include "include/controllerConfigEsp32Cam.h"
 #elif defined(BOARD_ESP32C3)
 #include "include/controllerConfigEsp32c3.h"
