@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Einstellungen – Lego Steuerung</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #f4f4f4;
+            padding: 1rem
+        }
+
+        h1,
+        h2 {
+            margin-bottom: 1rem
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 0 5px rgba(0, 0, 0, .1)
+        }
+
+        th,
+        td {
+            padding: .5rem;
+            border: 1px solid #ccc;
+            text-align: center
+        }
+
+        select,
+        input[type=number],
+        input[type=text] {
+            width: 100%;
+            box-sizing: border-box
+        }
+
+        label {
+            display: block;
+            margin-top: 1rem
+        }
+
+        .wifi-settings,
+        .stream,
+        .control-panel {
+            background: #fff;
+            padding: 1rem;
+            margin-top: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, .1)
+        }
+
+        button {
+            margin-top: 1rem;
+            padding: .5rem 1rem;
+            font-size: 1rem
+        }
+
+        .joysticks,
+        .sliders {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem
+        }
+
+        .joystick,
+        .slider {
+            flex: 1 1 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center
+        }
+
+        input[type=range] {
+            width: 100%
+        }
+
+        #configModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, .6);
+            justify-content: center;
+            align-items: center
+        }
+
+        #configContent {
+            background: #fff;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 1rem;
+            border-radius: 8px;
+            max-width: 800px;
+            width: 100%
+        }
+
+        #closeModal {
+            float: right;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin-bottom: 1rem
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/gh/bobboteck/JoyStick/joy.min.js"></script>
+</head>
+
+<body>
+    <div class="stream">
+        <div style="width:100%;max-height:50vh;display:flex;justify-content:center;align-items:center">
+            <img id="camera-stream" src="/stream" alt="Live Stream"
+                style="border:1px solid #ccc;max-width:100%;max-height:50vh">
+        </div>
+        <div class="joysticks">
+            <div class="joystick"><label>Joystick 1</label>
+                <div id="joy1Div" style="width:150px;height:150px"></div>
+            </div>
+            <div class="joystick"><label>Joystick 2</label>
+                <div id="joy2Div" style="width:150px;height:150px"></div>
+            </div>
+        </div>
+        <div class="sliders">
+            <div class="slider"><label for="slider1_control">Schieberegler 1</label><input type="range" min="0"
+                    max="100" value="50" id="slider1_control">
+            </div>
+            <div class="slider"><label for="slider2_control">Schieberegler 2</label><input type="range" min="0"
+                    max="100" value="50" id="slider2_control">
+            </div>
+            <div class="slider"><label for="slider3_control">Schieberegler 3</label><input type="range" min="0"
+                    max="100" value="50" id="slider3_control">
+            </div>
+            <div class="slider"><label for="slider4_control">Schieberegler 4</label><input type="range" min="0"
+                    max="100" value="50" id="slider4_control">
+            </div>
+        </div>
+    </div>
+    <button onclick="openModal()">⚙ Einstellungen</button>
+    <div id="configModal">
+        <div id="configContent">
+            <span id="closeModal" onclick="closeModal()">❌</span>
+            <h2>Einstellungen</h2>
+            <!-- Hier befinden sich die Einstellungen -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Steuerung</th>
+                        <th>Name</th>
+                        <th>Port</th>
+                        <th>Snap-Back</th>
+                        <th>Drift (-255 bis +255)</th>
+                    </tr>
+                </thead>
+                <tbody id="config-table-body"></tbody>
+            </table>
+            <div class="wifi-settings">
+                <h3>WLAN-Einstellungen</h3>
+                <label for="wifi_ssid">SSID</label>
+                <input type="text" id="wifi_ssid" placeholder="WLAN-Name">
+                <label for="wifi_password">Passwort</label>
+                <input type="text" id="wifi_password" placeholder="WLAN-Passwort">
+                <label for="i2c_sda">I2C SDA (z. B. 14)</label>
+                <input type="number" id="i2c_sda" placeholder="GPIO SDA">
+                <label for="i2c_scl">I2C SCL (z. B. 15)</label>
+                <input type="number" id="i2c_scl" placeholder="GPIO SCL">
+            </div>
+            <button onclick="saveConfig()">Konfiguration speichern</button>
+        </div>
+    </div>
+    <script>
+        let allowedGpios = [];
+
+        let controllers = [];
+
+        function createTableRow(c) {
+            const options = allowedGpios
+                .map(pin => `<option value="${pin}">${pin}</option>`)
+                .join('');
+            return `<tr>
+        <td>${c.label}</td>
+        <td><input type="text" id="${c.id}_name" placeholder="Name"></td>
+        <td><select id="${c.id}_port">${options}</select></td>
+        <td><input type="checkbox" id="${c.id}_snapback"></td>
+        <td><input type="number" id="${c.id}_drift" min="-255" max="255"></td>
+    </tr>`;
+        }
+
+        function saveConfig() {
+            const c = {
+                wifi: {
+                    ssid: document.getElementById('wifi_ssid').value,
+                    password: document.getElementById('wifi_password').value
+                }
+            };
+            c.i2c_sda = parseInt(document.getElementById('i2c_sda').value);
+            c.i2c_scl = parseInt(document.getElementById('i2c_scl').value);
+            c.controllers = {};
+            controllers.forEach(t => {
+                c.controllers[t.id] = {
+                    name: document.getElementById(`${t.id}_name`).value,
+                    port: parseInt(document.getElementById(`${t.id}_port`).value),
+                    snapback: document.getElementById(`${t.id}_snapback`).checked,
+                    drift: parseInt(document.getElementById(`${t.id}_drift`).value)
+                }
+            });
+            fetch('/save_json', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(c)
+            }).then(() => alert('Gespeichert!'));
+        }
+
+        function openModal() {
+            document.getElementById('configModal').style.display = 'flex'
+        }
+
+        function closeModal() {
+            document.getElementById('configModal').style.display = 'none'
+        }
+
+        // WebSocket-Verbindung herstellen
+        const ws = new WebSocket(`ws://${location.hostname}/ws`);
+        ws.onopen = () => console.log('WebSocket verbunden');
+        ws.onerror = err => console.error('WebSocket Fehler:', err);
+
+        function initJoysticks() {
+            let lastSend1 = 0;
+            new JoyStick('joy1Div', {}, d => {
+                const now = Date.now();
+                if (now - lastSend1 > 50) {
+                    const normalize = v => Math.round((Number(v) + 100) / 2);  // von [-100, 100] → [0, 100]
+                    const x = normalize(d.x);
+                    const y = normalize(d.y);
+                    ws.send(`1:${x}`);
+                    ws.send(`2:${y}`);
+                    lastSend1 = now;
+                }
+            });
+
+            let lastSend2 = 0;
+            new JoyStick('joy2Div', {}, d => {
+                const now = Date.now();
+                if (now - lastSend2 > 50) {
+                    const normalize = v => Math.round((Number(v) + 100) / 2);  // von [-100, 100] → [0, 100]
+                    const x = normalize(d.x);
+                    const y = normalize(d.y);
+                    ws.send(`3:${x}`);
+                    ws.send(`4:${y}`);
+                    lastSend2 = now;
+                }
+            });
+        }
+
+        function initSliders() {
+            ['slider1_control', 'slider2_control', 'slider3_control', 'slider4_control'].forEach((id, i) => {
+                let lastSend = 0;
+                document.getElementById(id).addEventListener('input', e => {
+                    const now = Date.now();
+                    if (now - lastSend > 50) {
+                        const axis = String.fromCharCode(65 + i);
+                        ws.send(`${i+5}:${e.target.value}`);
+                        lastSend = now;
+                    }
+                });
+            });
+        }
+
+        initJoysticks();
+        initSliders();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/get_config')
+                .then(response => response.json())
+                .then(data => {
+                    allowedGpios = data.allowed_gpio_ports || [];
+                    document.getElementById('wifi_ssid').value = data.wifi.ssid;
+                    document.getElementById('wifi_password').value = data.wifi.password;
+                    document.getElementById('i2c_sda').value = data.i2c_sda;
+                    document.getElementById('i2c_scl').value = data.i2c_scl;
+                    // Dynamische Controller-Liste aus data.controllers erzeugen
+                    controllers = Object.keys(data.controllers).map(id => ({
+                        id,
+                        label: id.replaceAll('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+                    }));
+
+                    document.getElementById('config-table-body').innerHTML =
+                        controllers.map(createTableRow).join('');
+
+                    // Fülle die Controller-Einstellungen aus
+                    controllers.forEach(t => {
+                        document.getElementById(`${t.id}_name`).value = data.controllers[t.id].name;
+                        
+                        const select = document.getElementById(`${t.id}_port`);
+                        const currentValue = data.controllers[t.id].port;
+                        if (!allowedGpios.includes(currentValue)) {
+                            select.insertAdjacentHTML('beforeend', `<option value="${currentValue}">${currentValue}</option>`);
+                        }
+                        select.value = currentValue;
+
+                        document.getElementById(`${t.id}_snapback`).checked = data.controllers[t.id].snapback;
+                        document.getElementById(`${t.id}_drift`).value = data.controllers[t.id].drift;
+                    });
+                })
+                .catch(error => console.error('Error fetching config:', error));
+        });
+    </script>
+</body>
+
+</html>

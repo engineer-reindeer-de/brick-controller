@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ESP32 Kamera-Stream</title>
+</head>
+<body>
+<h1>ESP32 Kamera-Stream</h1>
+<img src="http://192.168.2.144/stream" style="max-width:100%;"/>
+<canvas id="mjpeg-canvas" width="320" height="240" style="border:1px solid #ccc;"></canvas>
+
+<script>
+    function mjpegToCanvas(streamUrl, canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        const xhr = new XMLHttpRequest();
+
+        xhr.open('GET', streamUrl, true);
+        xhr.responseType = 'moz-chunked-arraybuffer' in xhr ? 'moz-chunked-arraybuffer' : 'ms-stream' in xhr ? 'ms-stream' : 'arraybuffer';
+        xhr.overrideMimeType('multipart/x-mixed-replace; boundary=--frame');
+
+        let buffer = '';
+        xhr.onprogress = function () {
+            const parts = xhr.responseText.split('--frame');
+            parts.forEach(part => {
+                const match = part.match(/Content-Length: (\d+)\r\n\r\n([\s\S]*)/);
+                if (match) {
+                    const base64Image = 'data:image/jpeg;base64,' + btoa(match[2]);
+                    img.src = base64Image;
+                }
+            });
+        };
+
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+
+        xhr.send();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        mjpegToCanvas('http://192.168.2.144/stream', 'mjpeg-canvas');
+    });
+</script>
+</body>
+</html>

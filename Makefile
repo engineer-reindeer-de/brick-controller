@@ -1,0 +1,53 @@
+# Makefile
+
+# Name der HTML-Datei
+HTML_FILE = index.html
+
+# Name der generierten Header-Datei
+HEADER_FILE = src/index_html.h
+
+# Ziel: Umwandlung der HTML-Datei in ein C-Array
+build:
+	xxd -i $(HTML_FILE) > $(HEADER_FILE)
+	@echo "Header-Datei $(HEADER_FILE) wurde erstellt."
+
+# Ziel: Öffnen der HTML-Datei im Browser
+.PHONY: open
+open: $(HTML_FILE)
+	open $(HTML_FILE)
+	@echo "HTML-Datei $(HTML_FILE) im Browser geöffnet."
+
+# Ziel: Alles ausführen
+.PHONY: all
+all: $(HEADER_FILE)
+
+# Ziel: Aufräumen
+.PHONY: clean
+clean:
+	rm -f $(HEADER_FILE)
+	@echo "Bereinigt: $(HEADER_FILE) wurde entfernt."
+
+# Kompilieren des Sketches mit PlatformIO
+.PHONY: compile
+compile:
+	platformio run
+	@echo "Kompilierung abgeschlossen."
+# Flashen des ESP32-CAM mit PlatformIO
+.PHONY: flash
+flash: build compile
+	platformio run --target upload
+	@echo "ESP32-CAM wurde geflasht."
+# Ziel: Alles ausführen
+.PHONY: all
+all: $(HEADER_FILE)
+
+# Serial Monitor öffnen mit PlatformIO
+.PHONY: monitor
+monitor:
+	platformio device monitor
+
+# Verfügbare serielle Ports auflisten
+.PHONY: list_ports
+list_ports:
+	@echo "Verfügbare serielle Ports:"
+	@ls /dev/tty.* /dev/cu.* 2>/dev/null || echo "Keine seriellen Ports gefunden."
