@@ -1,5 +1,7 @@
+#include <LittleFS.h>
 #include <Arduino.h>
-
+#include <ArduinoJson.h>
+#include <FS.h>
 #ifdef BOARD_ESP32
 #include <Preferences.h>
 #include <esp_system.h>
@@ -12,33 +14,25 @@
 #include "config.h"
 #include <cstring>
 
-int Config::findControllerIndexById(const char* id) const {
-  for (int i = 0; i < CONTROLLER_GPIO_COUNT; ++i) {
-        if (strcmp(controllers[i].name, id) == 0)
-            return i;
-    }
-    return -1;
-}
-
 void Config::print() const {
     logInfo("📦 Aktuelle Konfiguration:");
-
     logInfo("├ SSID: %s", ssid);
     logInfo("├ PASS: %s", password);
     logInfo("├ i2c_sda: %d", i2c.sda);
     logInfo("├ i2c_scl: %d", i2c.scl);
-    logInfo(" controllerConfiguration: ");
-
-    for (int i = 0; i < CONTROLLER_GPIO_COUNT; ++i) {
-        const auto& c = controllers[i];
-        logInfo("  ▶ [%d] %s → Port %d, Snapback: %s, Drift: %d",
-                      i, c.name, c.pin, c.snapback ? "true" : "false", c.drift);
-    }
 }
 
-Config::ControllerConfig* Config::getById(const char* id) {
-    int idx = findControllerIndexById(id);
-    return idx >= 0 ? &controllers[idx] : nullptr;
+char* Config::widgetsAsJson() {
+    static char buffer[4096];
+    File f = LittleFS.open("/widgets.json", "r");
+    if (!f) {
+        snprintf(buffer, sizeof(buffer), "{\"widgets\":[]}");
+        return buffer;
+    }
+    size_t len = f.readBytes(buffer, sizeof(buffer) - 1);
+    buffer[len] = '\0';
+    f.close();
+    return buffer;
 }
 
 void Config::load() {

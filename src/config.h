@@ -25,18 +25,33 @@
 class Config
 {
 public:
-    struct ControllerConfig
+
+    struct Option
     {
-        char name[16] = "";    // z. B. "joystick1_x", "slider3"
-        uint8_t pin = -1;      // LEDC-PWM-Port oder GPIO
-        bool snapback = false; // Rückstellung auf 0 bei Joystick
-        int16_t drift = 0;     // Drift-Korrektur in -255 bis +255
+        char name[16];
+        char label[16];
+        char type[16];
+        char defaultValue[16];
     };
 
+    struct Widget
+    {
+        char type[16];
+        char label[16];
+        Option* options;  
+    };
+    
     struct I2C
     {
         uint8_t sda = -1;
-        uint8_t scl = -1; // Drift-Korrektur in -255 bis +255
+        uint8_t scl = -1; 
+    };
+
+    struct ControllerMapping {
+        char chip[12];
+        char type[8];
+        uint8_t channel;
+        uint8_t pin;
     };
 
     inline bool isValidControllerPin(uint8_t pin)
@@ -48,9 +63,6 @@ public:
         }
         return false;
     }
-
-    ControllerConfig controllers[CONTROLLER_GPIO_COUNT]; // Anzahl nach CONTROLLER_GPIO_LIST
-
     I2C i2c;
 
     char ssid[64];     // WLAN-SSID
@@ -59,9 +71,6 @@ public:
     void load();
     void save();
     void reset();
-
-    int findControllerIndexById(const char *id) const;
-    ControllerConfig *getById(const char *id);
-
     void print() const;
+    char* widgetsAsJson();
 };
