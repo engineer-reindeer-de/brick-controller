@@ -26,12 +26,19 @@ function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, y
         restOpacity: 0.5,
       });
 
+      let lastSend = 0;
+      const throttleMs = 100; // Max. alle 100ms senden
+
       managerRef.current.on('move', (_, data) => {
+        const now = Date.now();
+        if (now - lastSend < throttleMs) return;
+        lastSend = now;
+
         if (data && data.vector) {
           const x = Math.round((((xInverted ? -1 : 1) * data.vector.x) + (xDrift || 0)) * 100);
           const y = Math.round((((yInverted ? -1 : 1) * data.vector.y) + (yDrift || 0)) * 100);
           console.log(`Joystick move: x=${x}, y=${y}, Pins: ${xPin}, ${yPin}`);
-          // WebSocket oder Callback mit strukturierter Nachricht
+
           if (xPin !== undefined) {
             const msg = JSON.stringify({
               target: { type: "pwm", chip: "esp32", pin: xPin },
@@ -39,6 +46,7 @@ function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, y
             });
             window.socket?.send(msg);
           }
+
           if (yPin !== undefined) {
             const msg = JSON.stringify({
               target: { type: "pwm", chip: "esp32", pin: yPin },

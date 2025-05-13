@@ -52,6 +52,9 @@ list_ports:
 	@echo "Verfügbare serielle Ports:"
 	@ls /dev/tty.* /dev/cu.* 2>/dev/null || echo "Keine seriellen Ports gefunden."
 
+install-server:
+	docker run -it --rm -v "$(shell pwd)/frontend:/app" -w /app node:20-alpine npm install
+
 .PHONY: start-server
 start-server:
 	docker build -t esp32-cockpit-ui ./frontend

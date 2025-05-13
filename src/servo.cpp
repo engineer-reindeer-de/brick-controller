@@ -8,11 +8,8 @@ static int8_t esp32PwmChannels[CONTROLLER_GPIO_COUNT];   // GPIO → channel; -1
 
 void writeServo(uint8_t pin, int angle)
 {
-  if (pin >= CONTROLLER_GPIO_COUNT) {
-    logInfo("⚠️ Ungültiger Pin: %d", pin);
-    return;
-  }
-  int8_t channel = esp32PwmChannels[pin];
+ 
+  int8_t channel = getChannelByPin(pin);
   if (channel < 0) {
     logInfo("⚠️ Kein LEDC‑Kanal für Pin %d", pin);
     return;
@@ -47,15 +44,23 @@ void initPwmPinsFromMapping(const Config &cfg)
 #if defined(LED_PWM_RESOLUTION)
     ledcSetup(channel, 50, LED_PWM_RESOLUTION);   // 50 Hz servo PWM
     ledcAttachPin(pin, channel);
-    delay(2000);
-    logInfo("LEDC Servo init → pin:%d → channel:%d OK", pin, channel);
-
-    break;
-    //esp32PwmChannels[channel] = pin;
-    
-    //++channel;
+    esp32PwmChannels[channel] = pin;
+    ++channel;
 #else
     logInfo("⚠️ LED_PWM_RESOLUTION nicht definiert – PWM nicht initialisiert");
 #endif
   }
+}
+
+int getChannelByPin(int pin)
+{
+  // Search the channel→pin lookup table for the given GPIO.
+  for (size_t ch = 0; ch < sizeof(esp32PwmChannels) / sizeof(esp32PwmChannels[0]); ++ch)
+  {
+    if (esp32PwmChannels[ch] == pin)
+    {
+      return static_cast<int>(ch);   // channel found
+    }
+  }
+  return -1;  // not assigned
 }
