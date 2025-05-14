@@ -8,7 +8,7 @@
 #elif defined(BOARD_ESP32CAM)
 #include "include/controllerConfigEsp32Cam.h"
 #elif defined(BOARD_ESP32C3)
-#include "include/controllerConfigEsp32c3.h"
+#include "include/controllerConfigEsp32C3.h"
 #else
 #error "Kein gültiges Board definiert – keine controller_config eingebunden"
 #endif
