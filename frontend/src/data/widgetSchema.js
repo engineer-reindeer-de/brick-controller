@@ -29,7 +29,7 @@ export const widgetSchemas = {
     video: {
       label: 'Video Stream',
       options: [
-        { name: 'url', label: 'StreamURL', type: 'string', default: 'http://esp32.local/stream' }
+        { name: 'url', label: 'StreamURL', type: 'string', default: '/stream' }
       ]
     },
     sensor: {
