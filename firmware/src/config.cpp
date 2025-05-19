@@ -36,10 +36,21 @@ char* Config::widgetsAsJson() {
 }
 
 void Config::load() {
+  logInfo("🎚️ Lade Konfiguration");
   #ifdef BOARD_ESP32
     Preferences prefs;
     prefs.begin("cfg", true);
-    prefs.getBytes("data", this, sizeof(Config));
+    if (!prefs.isKey("data")) {
+      logInfo("⚠️ Konfiguration nicht gefunden. Standardwerte gesetzt.");
+      memset(this->ssid, 0, sizeof(this->ssid));
+      memset(this->password, 0, sizeof(this->password));
+      strncpy(this->ssid, "default-ssid", sizeof(this->ssid) - 1);
+      strncpy(this->password, "", sizeof(this->password) - 1);
+      this->i2c.sda = 14;
+      this->i2c.scl = 15;
+    } else {
+      prefs.getBytes("data", this, sizeof(Config));
+    }
     prefs.end();
   #endif
 

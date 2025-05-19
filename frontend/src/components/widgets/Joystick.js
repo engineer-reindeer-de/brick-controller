@@ -1,21 +1,31 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import nipplejs from 'nipplejs';
 
-function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, yDrift }) {
+function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, yDrift, availablePins }) {
   const joystickRef = useRef(null);
   const managerRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
 
-  const [availableChannels, setAvailableChannels] = useState([]);
+  useLayoutEffect(() => {
+    const observer = new window.ResizeObserver((entries) => {
+      for (let entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          setIsVisible(true);
+        }
+      }
+    });
 
-  useEffect(() => {
-    fetch('/api/pwm_channels')
-      .then(res => res.json())
-      .then(data => setAvailableChannels(data))
-      .catch(err => console.error('Fehler beim Laden der PWM-Kanäle:', err));
+    if (joystickRef.current) {
+      observer.observe(joystickRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
-  useEffect(() => {
-    if (joystickRef.current && !managerRef.current) {
+  useLayoutEffect(() => {
+    if (isVisible && joystickRef.current && !managerRef.current) {
       managerRef.current = nipplejs.create({
         zone: joystickRef.current,
         mode: 'static',
@@ -35,9 +45,16 @@ function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, y
         lastSend = now;
 
         if (data && data.vector) {
-          const x = Math.round((((xInverted ? -1 : 1) * data.vector.x) + (xDrift || 0)) * 100);
-          const y = Math.round((((yInverted ? -1 : 1) * data.vector.y) + (yDrift || 0)) * 100);
-          console.log(`Joystick move: x=${x}, y=${y}, Pins: ${xPin}, ${yPin}`);
+          const driftX = Number(xDrift || 0);
+          const driftY = Number(yDrift || 0);
+
+          const rawX = ((data.vector.x + driftX) * (xInverted ? -1 : 1)) * 100;
+          const rawY = ((data.vector.y + driftY) * (yInverted ? -1 : 1)) * 100;
+
+          const x = Math.round(Math.max(-100, Math.min(100, rawX)));
+          const y = Math.round(Math.max(-100, Math.min(100, rawY)));
+
+          console.log(`Joystick raw: x=${rawX}, y=${rawY} → clamped: x=${x}, y=${y}`);
 
           if (xPin !== undefined) {
             const msg = JSON.stringify({
@@ -60,7 +77,6 @@ function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, y
       managerRef.current.on('end', () => {
         if (snapback) {
           console.log('Joystick released to center');
-          // Reset Werte auf 127 senden (Mittelstellung)
           if (xPin !== undefined) {
             const msg = JSON.stringify({
               target: { type: "pwm", chip: "esp32", pin: xPin },
@@ -85,7 +101,7 @@ function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, y
         managerRef.current = null;
       }
     };
-  }, [xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, yDrift]);
+  }, [isVisible, xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, yDrift]);
 
   return (
     <div className="card mb-3">

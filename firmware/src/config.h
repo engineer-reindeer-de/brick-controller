@@ -63,6 +63,7 @@ public:
         }
         return false;
     }
+
     I2C i2c;
 
     char ssid[64];     // WLAN-SSID

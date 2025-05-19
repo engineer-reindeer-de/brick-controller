@@ -1,16 +1,7 @@
-#include <SD.h>
-#include <LittleFS.h>
-#include "config.h"
 
+#include "webserver.h"
 extern Config cfg;
 
-#include <ESPAsyncWebServer.h>
-#include "websocket.h"
-#include "index_html.h"
-#include <ArduinoJson.h>
-#include <algorithm>   // für std::min
-
-#include "servo.h"
 void initPwmPinsFromMapping(const Config& cfg);
 
 #ifdef BOARD_ESP32CAM
@@ -132,6 +123,22 @@ void setupServer()
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
 
+  // API: /api/sensors (Sensorquellen für Dropdown im Frontend)
+  server.on("/api/sensors", HTTP_GET, [](AsyncWebServerRequest *req) {
+    JsonDocument doc;
+    JsonArray arr = doc.to<JsonArray>();
+
+    // Beispielhafte Signalpfade – später dynamisch erweiterbar
+    arr.add("wifi.rssi");
+    arr.add("battery.voltage");
+    arr.add("environment.temperature");
+    arr.add("environment.humidity");
+
+    String json;
+    serializeJson(doc, json);
+    req->send(200, "application/json", json);
+  });
+
   server.on("/api/widgets", HTTP_POST, [](AsyncWebServerRequest *req) {}, NULL,
   [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total) {
     String body = String((const char*)data).substring(0, len);
@@ -182,46 +189,36 @@ void setupServer()
       cfg.save();
       cfg.print();
 
-      //direkt versuchen mit dem neuen Wifi zu konnekten!
+      startWiFi();
 
       req->send(200, "application/json", "{\"status\":\"ok\"}");
     });
 
-  server.on("/api/save_json", HTTP_POST, [](AsyncWebServerRequest *req) {}, NULL,
-    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total)
-    {
-        String body = String((const char*)data).substring(0, len);
-        JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, body);
-        if (err) {
-          req->send(400, "text/plain", err.c_str());
-          return;
-        }
+  // --- I2C-Konfiguration ---
+  server.on("/api/i2c", HTTP_GET, [](AsyncWebServerRequest *req) {
+    JsonDocument doc;
+    doc["sda"] = cfg.i2c.sda;
+    doc["scl"] = cfg.i2c.scl;
+    String json;
+    serializeJson(doc, json);
+    req->send(200, "application/json", json);
+  });
 
-        // WLAN-Daten
-        const char* ssid = doc["wifi"]["ssid"] | "";
-        const char* password = doc["wifi"]["password"] | "";
-        strncpy(cfg.ssid, ssid, sizeof(cfg.ssid));
-        strncpy(cfg.password, password, sizeof(cfg.password));
-
-        // Widgets (optional, wenn enthalten)
-        JsonArray widgets = doc["widgets"];
-        if (!widgets.isNull()) {
-          File f = LittleFS.open("/widgets.json", "w");
-          if (f) {
-            serializeJson(doc, f);
-            f.close();
-          }
-        }
-
-        cfg.i2c.sda = doc["i2c_sda"] | cfg.i2c.sda;
-        cfg.i2c.scl = doc["i2c_scl"] | cfg.i2c.scl;
-
-        cfg.save();
-        cfg.print();
-        req->send(200, "text/plain", "OK");
-        delay(1000);
-        ESP.restart();
+  server.on("/api/i2c", HTTP_POST, [](AsyncWebServerRequest *req) {}, NULL,
+    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total) {
+      String body = String((const char*)data).substring(0, len);
+      JsonDocument doc;
+      DeserializationError err = deserializeJson(doc, body);
+      if (err) {
+        req->send(400, "text/plain", err.c_str());
+        return;
+      }
+      cfg.load();
+      cfg.i2c.sda = doc["sda"] | -1;
+      cfg.i2c.scl = doc["scl"] | -1;
+      cfg.save();
+      cfg.print();
+      req->send(200, "application/json", "{\"status\":\"ok\"}");
     });
 
   // Ergänzung: /api/restart
@@ -231,66 +228,23 @@ void setupServer()
       delay(500);
       ESP.restart(); });
 
-  // Ergänzung: /api/reset_config
-  server.on("/api/reset_config", HTTP_GET, [](AsyncWebServerRequest *req)
-            {
-      req->send(200, "text/plain", "Zurückgesetzt – Neustart...");
-      delay(500);
-      cfg.reset(); });
-
-  // Neue Route: /api/save_widgets → speichert Widgets als JSON-Datei
-  server.on("/api/save_widgets", HTTP_POST, [](AsyncWebServerRequest *req) {}, NULL,
-    [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total)
-    {
-      String body = String((const char*)data).substring(0, len);
-      JsonDocument doc;
-      DeserializationError err = deserializeJson(doc, body);
-      if (err) {
-        req->send(400, "text/plain", err.c_str());
-        return;
-      }
-
-      JsonArray widgets = doc["widgets"];
-      if (!widgets.isNull()) {
-        File f = LittleFS.open("/widgets.json", "w");
-        if (!f) {
-          req->send(500, "text/plain", "Fehler beim Speichern");
-          return;
-        }
-        serializeJson(doc, f);
-        f.close();
-
-        // Inhalt auch in Konfiguration übernehmen
-        String jsonString;
-        serializeJson(doc, jsonString);
-        cfg.save();
-
-        req->send(200, "text/plain", "Gespeichert");
-      } else {
-        req->send(400, "text/plain", "widgets[] fehlt");
-      }
-    });
-
   // Neuer API-Endpunkt: /api/pwm_channels
 server.on("/api/pins", HTTP_GET, [](AsyncWebServerRequest *req) {
   JsonDocument doc;
   JsonArray arr = doc.to<JsonArray>();
 
-  for (int i = 1; i <= CONTROLLER_GPIO_COUNT; ++i) {
+  for (int i = 0; i < CONTROLLER_GPIO_COUNT; ++i) {
     int pin = allowedControllerPins[i];
-      JsonObject o = arr.add<JsonObject>();
-      o["pin"] = pin;
+    JsonObject o = arr.add<JsonObject>();
+    o["pin"] = pin;
+    String label = "GPIO " + String(pin);
+    o["label"] = label;
   }
 
   String json;
   serializeJson(doc, json);
   req->send(200, "application/json", json);
 });
-
-  // Neuer Endpunkt: /api/get_widgets
-  server.on("/api/get_widgets", HTTP_GET, [](AsyncWebServerRequest *req) {
-    req->send(200, "application/json", cfg.widgetsAsJson());
-  });
 
 #ifdef HAS_CAMERA
   server.on("/stream", HTTP_GET, streamJPG);

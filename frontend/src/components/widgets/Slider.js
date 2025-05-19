@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
+// Declare lastSend outside the component to persist across renders and calls
+let lastSend = 0;
+
 function Slider({ label, pin, onChange }) {
   const [value, setValue] = useState(127);
 
@@ -14,10 +17,8 @@ function Slider({ label, pin, onChange }) {
           value={value}
           className="form-range"
           onChange={(e) => {
-
-            let lastSend = 0;
-            const throttleMs = 100; // Max. alle 100ms senden
-            if (now - lastSend < throttleMs) return;
+            const now = Date.now();
+            if (now - lastSend < 100) return;
             lastSend = now;
 
             const newValue = Number(e.target.value);

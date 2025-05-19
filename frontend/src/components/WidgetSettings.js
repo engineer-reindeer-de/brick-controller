@@ -3,7 +3,11 @@ import { Button } from 'react-bootstrap';
 import { widgetSchemas } from '../data/widgetSchema';
 import { Form } from 'react-bootstrap';
 
-function WidgetSettings({ widget, index, widgets, setWidgets, availablePins, moveUp, moveDown }) {
+function WidgetSettings({ widget, index, widgets, setWidgets, availablePins, moveUp, moveDown, sensorSources = [] }) {
+  if (!widget || typeof widget !== 'object' || !Array.isArray(widget.options)) {
+    console.warn('Ungültige Widget-Konfiguration:', widget);
+    return null;
+  }
   if (typeof widget.type !== 'string') {
     console.warn('Ungültiger widget.type:', widget.type);
     return null;
@@ -31,7 +35,7 @@ function WidgetSettings({ widget, index, widgets, setWidgets, availablePins, mov
   return (
     <div className="mb-4 p-3 border rounded bg-light">
       <div className="d-flex justify-content-between mb-2">
-      <h5>{widget.label} ({widget.type})</h5>
+      <h5>{widget.type}</h5>
       <div className="btn-group btn-group-sm">
           <Button
           size="sm"
@@ -92,13 +96,24 @@ function WidgetSettings({ widget, index, widgets, setWidgets, availablePins, mov
                   onChange={(e) => updateOption(idx, parseInt(e.target.value, 10))}
                 />
               )
+          ) : (
+            opt.name === 'source' && Array.isArray(sensorSources) ? (
+              <Form.Select
+                value={opt.value}
+                onChange={(e) => updateOption(idx, e.target.value)}
+              >
+                {sensorSources.map((src, i) => (
+                  <option key={i} value={src}>{src}</option>
+                ))}
+              </Form.Select>
             ) : (
               <Form.Control
                 type="text"
                 value={opt.value}
                 onChange={(e) => updateOption(idx, e.target.value)}
               />
-            )}
+            )
+          )}
           </Form.Group>
         );
       })}

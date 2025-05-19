@@ -1,190 +1,177 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
-import VideoStream from './components/VideoStream';
-import Slider from './components/Slider';
-import Button from './components/Button';
-import Sensor from './components/Sensor';
-import Navbar from './components/Navbar';
-import Joystick from './components/Joystick';
-import WidgetSettings from './components/WidgetSettings';
-
-import { mapOptions } from './utils/mapOptions'; // optional, falls verwendet
-import { Modal, Button as BsButton, Form } from 'react-bootstrap';
+import { Tabs, Tab, Modal, Form, Button } from 'react-bootstrap';
+import WidgetBoard from './components/WidgetBoard';
+import WidgetSettingsPanel from './components/WidgetSettingsPanel';
+import Settings from './components/Settings';
 import { widgetSchemas } from './data/widgetSchema';
 
 function App() {
-  const [widgets, setWidgets] = useState([]);
-  const [newWidgetType, setNewWidgetType] = useState('');
-  const [newWidgetOptions, setNewWidgetOptions] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [availablePins] = useState([
-    { value: 2, label: 'GPIO 2 – LED' },
-    { value: 4, label: 'GPIO 4 – I2C SDA' },
-    { value: 5, label: 'GPIO 5 – I2C SCL' },
-    { value: 12, label: 'GPIO 12 – Servo X' },
-    { value: 13, label: 'GPIO 13 – Servo Y' },
-    { value: 14, label: 'GPIO 14 – PWM 1' },
-    { value: 15, label: 'GPIO 15 – PWM 2' }
-  ]);
-  const [wsConnected, setWsConnected] = useState(false);
+  const [key, setKey] = React.useState('widgets');
+  const [widgets, setWidgets] = React.useState([]);
+  const [showAddModal, setShowAddModal] = React.useState(false);
+  const [newWidgetType, setNewWidgetType] = React.useState('slider');
+  const [availablePins, setAvailablePins] = React.useState([]);
+  const [wsConnected, setWsConnected] = React.useState(false);
+  const [sensorSources, setSensorSources] = React.useState([]);
 
-  useEffect(() => {
-    const socket = new WebSocket('ws://' + window.location.hostname + '/ws');
-    window.socket = socket;
-
-    socket.onopen = () => setWsConnected(true);
-    socket.onclose = () => setWsConnected(false);
-    socket.onerror = () => setWsConnected(false);
-
-    return () => socket.close();
-  }, []);
-
-  useEffect(() => {
-    fetch('/api/widgets')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data.widgets)) {
-          setWidgets(data.widgets);
-          console.log('Widgets vom Server geladen:', JSON.stringify(data, null, 2));
-        } else {
-          console.warn('Keine gültigen Widgets im Response:', data);
+  React.useEffect(() => {
+    fetch('/api/pins')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setAvailablePins(data.map(pin => ({
+            value: pin.pin,
+            label: pin.label || `GPIO ${pin.pin}`
+          })));
         }
       })
-      .catch((err) => {
-        console.error('Fehler beim Abrufen der Widgets:', err);
-      });
+      .catch(err => console.error('Fehler beim Laden der verfügbaren Pins:', err));
+
+    // Nach dem Laden der Pins: gespeicherte Widgets laden
+    fetch('/api/widgets')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data.widgets)) {
+          setWidgets(data.widgets);
+        } else {
+          console.warn('Unerwartete Antwort von /api/widgets:', data);
+        }
+      })
+      .catch(err => console.error('Fehler beim Laden der gespeicherten Widgets:', err));
+
+    // Sensorquellen laden
+    fetch('/api/sensors')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setSensorSources(data);
+        }
+      })
+      .catch(err => console.error('Fehler beim Laden der Sensorquellen:', err));
   }, []);
 
-  const handleSliderChange = (pin, value) => {
-    console.log(`Slider: Pin ${pin}, Wert ${value}`);
-    // z. B. per WebSocket senden
+  React.useEffect(() => {
+    if (!window.socket) {
+      const socket = new WebSocket(`ws://${window.location.hostname}/ws`);
+      window.socket = socket;
+
+      socket.onopen = () => {
+        console.log("✅ WebSocket verbunden");
+        setWsConnected(true);
+      };
+
+      socket.onclose = () => {
+        console.warn("❌ WebSocket getrennt");
+        setWsConnected(false);
+      };
+
+      socket.onerror = (err) => {
+        console.error("WebSocket-Fehler:", err);
+        setWsConnected(false);
+      };
+    }
+  }, []);
+
+  const handleSliderChange = (id, value) => {
+    console.log('Slider changed:', id, value);
   };
 
-  const handleButtonClick = (action) => {
-    console.log(`Button-Action: ${action}`);
-    // z. B. per WebSocket senden
+  const handleButtonClick = (id) => {
+    console.log('Button clicked:', id);
   };
 
-  // Move up/down widget functions
   const moveWidgetUp = (index) => {
-    if (index === 0) return;
-    const updated = [...widgets];
-    [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
-    setWidgets(updated);
+    if (index > 0) {
+      const updated = [...widgets];
+      [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
+      setWidgets(updated);
+    }
   };
 
   const moveWidgetDown = (index) => {
-    if (index === widgets.length - 1) return;
-    const updated = [...widgets];
-    [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
-    setWidgets(updated);
+    if (index < widgets.length - 1) {
+      const updated = [...widgets];
+      [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
+      setWidgets(updated);
+    }
   };
 
+  const handleAddWidget = () => {
+    setShowAddModal(true);
+  };
+
+  const handleConfirmAddWidget = () => {
+    const label = `Neues ${newWidgetType}`;
+    const newWidget = {
+      label,
+      type: newWidgetType,
+      options: widgetSchemas[newWidgetType]?.options.map(opt => ({
+        ...opt,
+        value: opt.default ?? ''
+      })) ?? []
+    };
+    setWidgets([...widgets, newWidget]);
+    setShowAddModal(false);
+  };
+
+  const handleSaveWidgets = () => {
+    fetch('/api/widgets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ widgets })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Fehler beim Speichern der Widgets');
+        return res.json();
+      })
+      .then(() => console.log('Widgets erfolgreich gespeichert.'))
+      .catch(err => console.error('Fehler:', err.message));
+  };
 
   return (
     <>
-
-      <div className="container py-4">
-        <div className="card mb-4">
-          <div className="card-body">
-            <h1 className="card-title">ESP32 Cockpit</h1>
-            <p>Status: {wsConnected ? "🟢 WebSocket verbunden" : "🔴 keine Verbindung"}</p>
-            <p className="card-text">Steuere dein Gerät über dynamische UI-Komponenten.</p>
-          </div>
-        </div>
-
-        <div id="dashboard" className="row g-4">
-          {widgets.map((widget, index) => {
-            const props = {
-              key: index,
-              label: widget.label,
-              ...mapOptions(widget.options || [])
-            };
-
-            const colClass = "col-12 col-md-6 col-lg-4";
-
-            switch (widget.type) {
-              case 'video':
-                return <div className={colClass}><VideoStream {...props} /></div>;
-              case 'joystick':
-                return <div className={colClass}><Joystick {...props} /></div>;
-              case 'slider':
-                return <div className={colClass}><Slider {...props} onChange={handleSliderChange} /></div>;
-              case 'button':
-                return <div className={colClass}><Button {...props} onClick={handleButtonClick} /></div>;
-              case 'sensor':
-                return <div className={colClass}><Sensor {...props} /></div>;
-              default:
-                return null;
-            }
-          })}
-        </div>
-
-        {/* Einstellungen-Bereich */}
-        <div className="card mt-5" id="settings">
-          <div className="card-header d-flex justify-content-between align-items-center">
-            <span>Widget-Konfiguration</span>
-            <BsButton
-              variant="success"
-              size="sm"
-              onClick={() => setShowAddModal(true)}
-            >
-              ＋ hinzufügen
-            </BsButton>
-          <BsButton
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              fetch('/api/widgets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ widgets })
-              })
-              .then(res => res.ok ? alert("Gespeichert ✅") : alert("Fehler beim Speichern ❌"))
-              .catch(err => {
-                console.error("Fehler beim Speichern:", err);
-                alert("Netzwerkfehler beim Speichern ❌");
-              });
-            }}
-          >
-            speichern
-          </BsButton>
-          </div>
-          
-          <div className="card-body">
-            {widgets.map((widget, index) => (
-              <div className="d-flex align-items-start justify-content-between mb-3" key={index}>
-                <div className="flex-grow-1 me-3">
-                  <WidgetSettings
-                    widget={widget}
-                    index={index}
-                    widgets={widgets}
-                    setWidgets={setWidgets}
-                    availablePins={availablePins}
-                    moveUp={moveWidgetUp}
-                    moveDown={moveWidgetDown}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div class="container mt-3">
+      <div className="text-end text-muted px-3">
+        WebSocket:{" "}
+        <span style={{ color: wsConnected ? "green" : "red" }}>
+          {wsConnected ? "verbunden" : "getrennt"}
+        </span>
       </div>
-      {/* Modal für neues Widget */}
-      <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Neues Widget hinzufügen</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Typ auswählen</Form.Label>
+      <Tabs id="main-tabs" activeKey={key} onSelect={(k) => setKey(k)} className="mb-3">
+        <Tab eventKey="widgets" title="Widgets">
+          <WidgetBoard
+            widgets={widgets}
+            availablePins={availablePins}
+            handleSliderChange={handleSliderChange}
+            handleButtonClick={handleButtonClick}
+          />
+        </Tab>
+        <Tab eventKey="widget-settings" title="Widget-Einstellungen">
+          <WidgetSettingsPanel
+            widgets={widgets}
+            setWidgets={setWidgets}
+            availablePins={availablePins}
+            moveWidgetUp={moveWidgetUp}
+            moveWidgetDown={moveWidgetDown}
+            onSave={handleSaveWidgets}
+            sensorSources={sensorSources}
+          />
+        </Tab>
+        <Tab eventKey="settings" title="Allgemeine Einstellungen">
+          <Settings availablePins={availablePins} />
+        </Tab>
+        <Modal show={showAddModal} onHide={() => setShowAddModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Widget hinzufügen</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Group>
+              <Form.Label>Widget-Typ</Form.Label>
               <Form.Select
                 value={newWidgetType}
                 onChange={(e) => setNewWidgetType(e.target.value)}
               >
-                <option value="">-- auswählen --</option>
                 <option value="video">Video</option>
                 <option value="joystick">Joystick</option>
                 <option value="slider">Slider</option>
@@ -192,34 +179,18 @@ function App() {
                 <option value="sensor">Sensor</option>
               </Form.Select>
             </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <BsButton variant="secondary" onClick={() => setShowAddModal(false)}>Abbrechen</BsButton>
-          <BsButton
-            variant="primary"
-            onClick={() => {
-              const schema = widgetSchemas[newWidgetType];
-              const newWidget = {
-                type: newWidgetType,
-                label: schema?.label || (newWidgetType[0].toUpperCase() + newWidgetType.slice(1)),
-                options: schema?.options.map(({ name, label, type, default: value }) => ({
-                  name, label, type, value
-                })) || []
-              };
-              const updatedWidgets = [...widgets, newWidget];
-              setWidgets(updatedWidgets);
-              console.log('Aktuelle config:', JSON.stringify({ widgets: updatedWidgets }, null, 2));
-              setNewWidgetType('');
-              setNewWidgetOptions([]);
-              setShowAddModal(false);
-            }}
-            disabled={!newWidgetType}
-          >
-            Hinzufügen
-          </BsButton>
-        </Modal.Footer>
-      </Modal>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+              Abbrechen
+            </Button>
+            <Button variant="primary" onClick={handleConfirmAddWidget}>
+              Hinzufügen
+            </Button>
+          </Modal.Footer>
+        </Modal>
+      </Tabs>
+    </div>
     </>
   );
 }
