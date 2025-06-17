@@ -1,2 +1,0 @@
-void setupServer();
-void cleanUpClients();

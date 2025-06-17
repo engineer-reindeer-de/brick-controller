@@ -1,0 +1,100 @@
+{
+  "widgets": [
+    {
+      "type": "video",
+      "label": "Video Stream",
+      "options": [
+        {
+          "name": "url",
+          "value": "http://esp32.local/stream",
+          "type": "string",
+          "label": "StreamURL"
+        }
+      ]
+    },
+    {
+      "type": "joystick",
+      "label": "Joystick",
+      "options": [
+        {
+          "name": "xPin",
+          "value": 12,
+          "type": "integer",
+          "label": "X-Pin"
+        },
+        {
+          "name": "yPin",
+          "value": 13,
+          "type": "integer",
+          "label": "Y-Pin"
+        },
+        {
+          "name": "xInverted",
+          "value": false,
+          "type": "boolean",
+          "label": "X-Interierung"
+        },
+        {
+          "name": "yInverted",
+          "value": false,
+          "type": "boolean",
+          "label": "Y-Interierung"
+        },
+        {
+          "name": "snapback",
+          "value": true,
+          "type": "boolean",
+          "label": "Rückstellung"
+        },
+        {
+          "name": "xDrift",
+          "value": 0,
+          "type": "int",
+          "label": "X-Korrektur"
+        },
+        {
+          "name": "yDrift",
+          "value": 0,
+          "type": "int",
+          "label": "Y-Korrektur"
+        }
+      ]
+    },
+    {
+      "type": "slider",
+      "label": "LED Helligkeit",
+      "options": [
+        {
+          "name": "label",
+          "value": "LED Helligkeit",
+          "type": "string",
+          "label": "Bezeichnung"
+        },
+        {
+          "name": "pin",
+          "value": 4,
+          "type": "integer",
+          "label": "Pin"
+        }
+      ]
+    },
+    {
+      "type": "button",
+      "label": "Humpe",
+      "options": [
+        {
+          "name": "label",
+          "value": "Humpe",
+          "type": "string",
+          "label": "Anzeigetext"
+        },
+        {
+          "name": "pin",
+          "value": 5,
+          "type": "integer",
+          "label": "Pin"
+        }
+      ]
+    }
+  ]
+}
