@@ -12,6 +12,8 @@ Das *ESP32-Cockpit* soll eine flexible, benutzerfreundliche und erweiterbare Pla
 **Ziel:**  
 Ziel des Projekts ist es, eine konfigurierbare Open-Source-Lösung zu schaffen, mit der sich unterschiedlichste Technik- oder Robotikmodelle intuitiv über ein Webinterface steuern lassen – **ohne den Code auf dem Mikrocontroller bei einem Modellwechsel anpassen zu müssen**. Statt fester Hardware-Logik ermöglicht das Cockpit eine **dynamische Zuweisung von Steuerkomponenten wie Joysticks, Schiebereglern oder Sensoren** per Weboberfläche.
 
+🎬 Einen ersten Eindruck bekommst du im [YouTube-Video (Kurzvorschau)](https://youtube.com/shorts/rrZtNHq2LOI?feature=share).
+
 Dadurch wird es möglich, die gleiche Steuereinheit flexibel zwischen verschiedenen Modellen zu verwenden – z. B. von einem Roboterarm zu einem Fahrzeug oder Kran – **ohne Neu-Flashen, Re-Deployment oder Codeänderung**.
 
 Die Plattform dient dabei auch als:
@@ -28,7 +30,7 @@ Die Plattform dient dabei auch als:
 
 - 📡 Eigenständiger WiFi Access Point mit Webinterface
 - 🎥 Live-Kamera-Streaming via OV2640 (für ESP32-CAM)
-- 🪟 Konfigurierbare Widgets: 
+- 🪟 Konfigurierbare Widgets:
   - 🎥 VideoStream,
   - 🕹️ Joystick,
   - 🎚️ Slider,
@@ -46,8 +48,8 @@ Die Plattform dient dabei auch als:
 ![Cockpit UI Screenshot](docs/dashboard.png)
 
 #### 📋 2. Konfiguration
- - hinzufügen/entfernen von Widgets 
- - sortierung der Widgets
+- hinzufügen/entfernen von Widgets
+- sortierung der Widgets
 
 ![Cockpit UI Screenshot](docs/configuration.png)
 
@@ -57,7 +59,7 @@ Die Plattform dient dabei auch als:
 
 ![Cockpit UI Screenshot](docs/settings.png)
 
-📺 [Demo-Video auf YouTube ansehen](https://www.youtube.com/watch?v=...)
+📺 Demo-Video auf YouTube ansehen [YouTube-Video (Kurzvorschau)](https://youtube.com/shorts/rrZtNHq2LOI?feature=share).
 
 ---
 
