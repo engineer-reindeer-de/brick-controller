@@ -1,6 +1,8 @@
+# ESP32-Cockpit für Technikmodelle
 Ein lokal betriebenes, modular konfigurierbares Steuer-Cockpit für ESP32-basierte Technikmodelle – Webinterface inklusive Kamera-Stream, Joysticks, Sensoren und mehr.
 
-# ESP32-Cockpit für Technikmodelle
+Beispiel:
+![exemplarischer Aufbau](./docs/esp32cam/example_build.png)
 
 ## 🎯 Vision & Ziel
 
@@ -36,50 +38,65 @@ Die Plattform dient dabei auch als:
 - ⚙️ Steuerung von Servos mittels PWM
 - 🖥 Anzeige via SSD1306 OLED-Display (via I2C)
 - 🔌 Erweiterbar für I²C-Geräte (z. B. Sensoren) (⏳ WIP)
+---
+## 👀 Vorschau
 
-## 👀 Eindrücke
+#### 🕹️ 1. Dashboard
 
-### 🕹️ 1. Dashboard
 ![Cockpit UI Screenshot](docs/dashboard.png)
 
-### 📋 2. Konfiguration
+#### 📋 2. Konfiguration
  - hinzufügen/entfernen von Widgets 
  - sortierung der Widgets
+
 ![Cockpit UI Screenshot](docs/configuration.png)
 
-### 📋 3. Einstellungen
+#### 📋 3. Einstellungen
 - WLAN-Einstellungen
 - I2C-Verbinungseinstellung
+
 ![Cockpit UI Screenshot](docs/settings.png)
 
 📺 [Demo-Video auf YouTube ansehen](https://www.youtube.com/watch?v=...)
 
 ---
 
-## 📟 Supported Devices
+## 📟 Hardware
 
-- **✅ ESP32-CAM**
-- **✅ ESP32-C3**
+- [✅ ESP32-CAM](docs/esp32cam/hardware.md)
+- **⏳ ESP32-C3**
+
+👉 [Zur Hardware-Übersicht](docs/esp32cam/hardware.md)
 
 ---
 
-## 🧰 Verwendete Technologien
+## 🧰 Software
 
-- **ESP32-CAM** (mit LittleFS, AsyncWebServer, WebSocket)
 - **React.js** (Node 20, Tailwind CSS)
-- **OV2640** Kamera
-- **SSD1306** OLED-Display
-- **PlatformIO**, **VSCode**, **Docker** (optional)
+- **PlatformIO**
+- **VSCode**
+- **Docker** (optional)
 
 ---
 
-## 📦 Voraussetzungen
+## 🛠️ Projekt-Build mit Makefile
 
-- Docker oder Node.js ≥ 20 (für React-Frontend)
-- [PlatformIO](https://platformio.org/)
-- ESP32-CAM Modul + Flasher
-- Optional: SSD1306 OLED-Display (I²C)
+Das Projekt nutzt ein Makefile zur einfachen Steuerung von Build-, Upload- und Entwicklungsprozessen.
 
+### 🔃 Häufig genutzte Befehle
+
+```bash
+make build           # Firmware kompilieren (PlatformIO)
+make upload          # Firmware auf ESP32-CAM flashen
+make uploadfs        # Webinterface-Dateien auf ESP32-CAM hochladen
+make monitor         # Serielle Ausgabe überwachen
+make build-ui        # Frontend bauen (React → firmware/data)
+make install-server  # Node-Module installieren (in Docker)
+make start-server    # Lokalen Webserver starten (Docker, Port 3000)
+```
+
+> Hinweis: `uploadfs` führt automatisch `build-ui` aus und überträgt dann das Webinterface auf das Gerät.
+---
 ## 🛣️ Roadmap
 
 - [x] Webinterface mit Joystick & Slider
@@ -91,12 +108,21 @@ Die Plattform dient dabei auch als:
 - [ ] OTA-Update-Funktion
 
 ---
+## 🤝 Support
+
+Wenn dir dieses Projekt gefällt, kannst du es unterstützen oder in den sozialen Medien verfolgen:
+
+- [Buy Me a Coffee](https://www.buymeacoffee.com/engineerreindeer)
+- [Patreon](https://www.patreon.com/engineerreindeer)
+- [YouTube](https://www.youtube.com/@rusedus)
+- [GitHub](https://github.com/rswz/lego-controller)
+---
 
 ## 🙌 Mitwirken
 
 Pull Requests, Issues und Feature-Vorschläge sind willkommen!
 
-📬 Kontakt: rudolf@beispielmail.de  
+📬 Kontakt: rudolf.schwarz@rusedus.de  
 💬 Diskussionen: [GitHub Discussions](https://github.com/rswz/lego-controller/discussions)
 
 ---

@@ -65,7 +65,8 @@ void initCamera() {
   
     sensor_t* s = esp_camera_sensor_get();
     s->set_framesize(s, FRAMESIZE_QVGA);
-    s->set_vflip(s, 1);
+    s->set_vflip(s, 0);
+    s->set_hmirror(s,0);
     s->set_quality(s, 12);
     // Statusmeldung ergänzen
     if (cam_err == ESP_OK) {
