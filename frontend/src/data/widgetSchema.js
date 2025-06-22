@@ -11,7 +11,11 @@ export const widgetSchemas = {
       label: 'Slider',
       options: [
         { name: 'label', label: 'Bezeichnung', type: 'string', default: 'LED Helligkeit' },
-        { name: 'pin', label: 'Pin', type: 'integer', default: 15 }
+        { name: 'pin', label: 'Pin', type: 'integer', default: 15 },
+        { name: 'inverted', label: 'Invertierung', type: 'boolean', default: false },
+        { name: 'snapback', label: 'Rückstellung', type: 'boolean', default: true },
+        { name: 'drift', label: 'Korrektur', type: 'int', default: 0 },
+        { name: 'offset', label: 'Offset', type: 'int', default: 0 },
       ]
     },
     joystick: {
@@ -19,11 +23,13 @@ export const widgetSchemas = {
       options: [
         { name: 'xPin', label: 'X-Pin', type: 'integer', default: 12 },
         { name: 'yPin', label: 'Y-Pin', type: 'integer', default: 13 },
-        { name: 'xInverted', label: 'X-Interierung', type: 'boolean', default: false },
-        { name: 'yInverted', label: 'Y-Interierung', type: 'boolean', default: false },
+        { name: 'xInverted', label: 'X-Invertierung', type: 'boolean', default: false },
+        { name: 'yInverted', label: 'Y-Invertierung', type: 'boolean', default: false },
         { name: 'snapback', label: 'Rückstellung', type: 'boolean', default: true },
         { name: 'xDrift', label: 'X-Korrektur', type: 'int', default: 0 },
-        { name: 'yDrift', label: 'Y-Korrektur', type: 'int', default: 0 }
+        { name: 'yDrift', label: 'Y-Korrektur', type: 'int', default: 0 },
+        { name: 'xOffset', label: 'X-Offset', type: 'int', default: 0 },
+        { name: 'yOffset', label: 'Y-Offset', type: 'int', default: 0 }
       ]
     },
     video: {
