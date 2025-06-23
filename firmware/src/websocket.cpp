@@ -21,7 +21,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
     msg += (char)data[i];
   }
 
-  // JSON-Format: { "target": { "type": "pwm", "chip": "esp32", "pin": 12 }, "value": 123 }
+  // JSON-Format: { "target": { "type": "pwm", "chip": "esp32", "pin": 12 }, "value": 123, "offset": 23  }
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, msg);
   if (err) {
@@ -34,13 +34,17 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
   const char* chip = target["chip"] | "";
   int pin = target["pin"] | -1;
   int value = doc["value"] | -1;
+  int offset = doc["offset"] | 0;
+  int drift = doc["drift"] | 0;
 
   if (strcmp(targetType, "pwm") != 0 || value < 0 || value > 255 || pin < 0) {
     Serial.println("⚠️ Ungültige Steuerdaten");
     return;
   }
 
-  int angle = map(value, 0, 255, 0, 180);
+  value = value + drift;
+
+  int angle = map(value, offset, 255-offset, 0, 180);
   Serial.printf("[WebSocket] %s.%s pin %d = %d (Winkel: %d)\n", targetType, chip, pin, value, angle);
 
   if (pin < 0) {

@@ -23,11 +23,6 @@ void writeServo(uint8_t pin, int angle)
 #endif
 }
 
-int mapJS(int val)
-{
-  return constrain(map(val, 0, 100, 0, 180), 0, 180);
-}
-
 void initPwmPinsFromMapping(const Config &cfg)
 {
   memset(esp32PwmChannels, -1, sizeof(esp32PwmChannels));
