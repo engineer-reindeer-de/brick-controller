@@ -92,6 +92,7 @@ function WidgetSettings({ widget, index, widgets, setWidgets, availablePins, mov
               ) : (
                 <Form.Control
                   type="number"
+                  step="1"
                   value={opt.value}
                   onChange={(e) => updateOption(idx, parseInt(e.target.value, 10))}
                 />

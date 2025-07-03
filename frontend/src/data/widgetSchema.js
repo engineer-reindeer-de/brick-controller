@@ -12,7 +12,6 @@ export const widgetSchemas = {
       options: [
         { name: 'label', label: 'Bezeichnung', type: 'string', default: 'LED Helligkeit' },
         { name: 'pin', label: 'Pin', type: 'integer', default: 15 },
-        { name: 'inverted', label: 'Invertierung', type: 'boolean', default: false },
         { name: 'snapback', label: 'Rückstellung', type: 'boolean', default: true },
         { name: 'drift', label: 'Korrektur', type: 'int', default: 0 },
         { name: 'offset', label: 'Offset', type: 'int', default: 0 },

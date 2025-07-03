@@ -37,7 +37,7 @@ function Joystick({ xPin, yPin, snapback, drift, xInverted, yInverted, xDrift, y
       });
 
       let lastSend = 0;
-      const throttleMs = 100;
+      const throttleMs = 200;
 
       managerRef.current.on('move', (_, data) => {
         const now = Date.now();
