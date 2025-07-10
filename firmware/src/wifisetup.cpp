@@ -12,7 +12,7 @@ extern Config cfg;
 #include <ESP8266WiFi.h>
 #endif
 
-const char *AP_SSID = "ESP32CamAP";
+const char *AP_SSID = "BRICK_CONTROLLER";
 const char *AP_PASS = "12345678";
 
 void startWiFi()
