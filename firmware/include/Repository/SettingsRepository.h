@@ -5,10 +5,10 @@
 
 class SettingsRepository {
 private:
-    Logger logger;
-    Filesystem filesystem;
+    Logger &logger;
+    Filesystem &filesystem;
 public:
-    SettingsRepository(Logger logger, Filesystem filesystem);
+    SettingsRepository(Logger &logger, Filesystem &filesystem);
     void save(Settings settings);
     Settings load();
     bool reset();

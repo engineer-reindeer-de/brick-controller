@@ -1,6 +1,5 @@
 #include "Webserver.h"
 #include <ESPAsyncWebServer.h>
-#include "Controller/Websocket.h"
 #include <ArduinoJson.h>
 #include <algorithm> // für std::min
 #include "Logger.h"

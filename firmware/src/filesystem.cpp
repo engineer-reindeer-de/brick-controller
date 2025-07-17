@@ -2,7 +2,7 @@
 #include "Arduino.h"
 #include "LittleFS.h"
 
-Filesystem::Filesystem(Logger logger)
+Filesystem::Filesystem(Logger &logger)
 {
     if (!LittleFS.begin())
     {

@@ -3,8 +3,10 @@
 #include "Repository/SettingsRepository.h"
 #include "Entity/Settings.h"
 
-SettingsController::SettingsController(SettingsRepository settingsRepository, WifiConnection wifiConnection) : settingsRepository(settingsRepository),
-                                                                                                               wifiConnection(wifiConnection) {};
+SettingsController::SettingsController(SettingsRepository &settingsRepository,
+                                       WifiConnection &wifiConnection)
+    : settingsRepository(settingsRepository),
+      wifiConnection(wifiConnection) {}
 void SettingsController::get(AsyncWebServerRequest *req)
 {
   Settings settings = this->settingsRepository.load();
@@ -14,7 +16,7 @@ void SettingsController::get(AsyncWebServerRequest *req)
   String json;
   serializeJson(doc, json);
   req->send(200, "application/json", json);
-};
+}
 
 void SettingsController::post(AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total)
 {
@@ -46,4 +48,4 @@ void SettingsController::post(AsyncWebServerRequest *req, uint8_t *data, size_t 
   req->send(200, "application/json", "{\"status\":\"ok\"}");
 
   this->wifiConnection.connect(settings.wifiCredentials);
-};
+}

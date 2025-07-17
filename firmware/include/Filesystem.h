@@ -5,8 +5,11 @@
 
 class Filesystem
 {
+    private:
+        Logger &logger;
+
     public:
-        Filesystem(Logger logger);
+        Filesystem(Logger &logger);
         bool exists(const char* path);
         bool readFile(const char* path, String& out);
         bool writeFile(const char* path, const String& content);
